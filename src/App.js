@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import io from 'socket.io-client';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 class App extends Component {
 
@@ -11,33 +10,21 @@ class App extends Component {
       data: [],
       average: 0,
       averageInGbp: 0,
-      oneBtcInGbp: 0,
       oneEthInGbp: 0,
+      totalEth: 0,
     }
     this.handleChange = this.handleChange.bind(this);
   }
 
   componentDidMount() {
 
-    // Stream BTC/GBP exchange rate for conversion usage
-    var socket = io.connect('https://streamer.cryptocompare.com/');
-    socket.emit('SubAdd', { subs: ['5~CCCAGG~ETH~BTC'] });
-    socket.on('m', message => {
-      const msg = message.split('~');
-      const responseTicker = `${msg[2]}~${msg[3]}`;
-      const price = msg[5];
-      const subscriptionId = msg[0];
-      if (price && subscriptionId === '5' && responseTicker === 'BTC~GBP') {
+    fetch('https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=GBP').then(response => {
+      return response.json().then(json => {
         this.setState({
-          oneBtcInGbp: price,
+          oneEthInGbp: json.GBP,
         });
-      }
-      if (price && subscriptionId === '5' && responseTicker === 'ETH~BTC') {
-        this.setState({
-          oneEthInBtc: price,
-        });
-      }
-    });
+      });
+    })
 
   }
 
@@ -50,12 +37,14 @@ class App extends Component {
         date: splitRow[10],
       }
     });
-    const average = data.map(d => d.balance).reduce((acc, val, i) => {
+    const totalEth = data.map(d => d.balance).reduce((acc, val, i) => {
       return +acc + +val;
-    }, 0) / data.length;
+    }, 0);
+    const average = totalEth / data.length;
     this.setState({
       data,
       average,
+      totalEth,
     });
   }
 
@@ -66,15 +55,32 @@ class App extends Component {
   }
 
   render() {
+    const { state } = this;
+    const contractCostInGbp = 100;
+    const averagePerDayProfitGbp = (state.average * state.oneEthInGbp).toFixed(2);
+    const accruedPayback = (state.totalEth * state.oneEthInGbp).toFixed(2);
+    const daysLeft = (365*2 - +state.data.length);
+    const projectedReturn = (daysLeft * this.state.average * state.oneEthInGbp) - contractCostInGbp;
+    const projectedProfitPercent = (contractCostInGbp / 100) * projectedReturn;
+    const chartData = state.data.slice().reverse()
+                                .map((d, i) => ({ name: 'day '+ i, value: +d.balance }))
+
     return (
       <div>
         <textarea cols='100' rows='30' onChange={this.handleChange}></textarea>
-        <p>Average: {this.state.average} ETH over {this.state.data.length} days</p>
-        <p>Purchase of £100</p>
-        <p>Clawed back {this.state.averageInGbp}</p>
-        <p>1 BTC in GBP  = {+this.state.oneBtcInGbp} (should be around 2000)</p>
-        <p>1 ETH in BTC  = {+this.state.oneEthInBtc} (should be around 0.104)</p>
-        <p>1 ETH in GBP = ?</p>
+        <p>Average payback per day: £{averagePerDayProfitGbp} ({this.state.average.toFixed(4)} ETH) over {state.data.length} days </p>
+        <p>Purchase: £{contractCostInGbp}</p>
+        <p>Current accrued payback: £{accruedPayback}</p>
+        <p>Projected profit if price remains: £{projectedReturn.toFixed(2)} {projectedProfitPercent.toFixed(2)}% ({daysLeft} days left)</p>
+        <sub>Based on ETH/GBP {state.oneEthInGbp}</sub>
+        <LineChart width={400} height={400} data={chartData}>
+         <XAxis dataKey="name"/>
+         <YAxis/>
+         <Tooltip/>
+         <Legend />
+         <CartesianGrid strokeDasharray="3 3"/>
+          <Line type='monotone' dataKey='value' stroke='#8884d8' />
+        </LineChart>
       </div>
     );
   }
