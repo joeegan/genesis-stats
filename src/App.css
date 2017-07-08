@@ -1,6 +1,18 @@
+.rows {
+  font-size: 8px;
+  padding-bottom: 0;
+}
+
 .recharts-wrapper {
-  margin: 20px 0;
+  margin: 20px auto;
 }
 .recharts-legend-wrapper {
   margin: 0 0 5px;
+}
+
+.flex {
+  display: flex;
+}
+.flex > div {
+  flex: 1;
 }
