@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import './App.css';
 import Chart from './Chart';
 import mockData from './mock-data';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Line } from 'recharts';
 
 class App extends Component {
 
@@ -90,7 +90,7 @@ class App extends Component {
                                   return {
                                     day: i + 1,
                                     balance: +d.balance,
-                                    gbpValue: +d.balance * +state.ethGbpData.find(j => j.day == i).price,
+                                    gbpValue: +d.balance * +state.ethGbpData.find(j => j.day === i).price,
                                     average: (sumOfPreviousDays / i) || +d.balance,
                                   }
                                 });
