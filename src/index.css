@@ -1,7 +1,15 @@
 body {
   margin: 10px;
   padding: 0;
-  font-family: sans-serif;
+  font-family: 'Droid Sans Mono', monospace !important;
+  color: #333;
+  font-size: 12px;
+  background: #fffbf5;
+}
+
+h1 {
+  color: #F5B143;
+  font-size: 12px;
 }
 
 .rows {

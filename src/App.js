@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import mockData from './mock-data';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 class App extends Component {
@@ -14,6 +15,7 @@ class App extends Component {
       totalEth: 0,
     }
     this.handleChange = this.handleChange.bind(this);
+    this.processData = this.processData.bind(this);
   }
 
   componentDidMount() {
@@ -23,13 +25,13 @@ class App extends Component {
         this.setState({
           oneEthInGbp: json.GBP,
         });
+        this.processData(mockData);
       });
     })
-
   }
 
-  handleChange(event) {
-    const data = event.target.value.split('\n').map(row => {
+  processData(str) {
+    const data = str.split('\n').map(row => {
       const splitRow = row.split(' ');
       return {
         currency: splitRow[1],
@@ -48,6 +50,10 @@ class App extends Component {
     });
   }
 
+  handleChange(event) {
+    this.processData(event.target.value)
+  }
+
   get rows() {
     return this.state.data.map(o => (
       <p className='rows'>{o.balance}</p>
@@ -59,27 +65,42 @@ class App extends Component {
     const contractCostInGbp = 100;
     const averagePerDayProfitGbp = (state.average * state.oneEthInGbp).toFixed(2);
     const accruedPayback = (state.totalEth * state.oneEthInGbp).toFixed(2);
+    const accruedPaybackAsPercentage = (contractCostInGbp / 100) * accruedPayback;
     const daysLeft = (365*2 - +state.data.length);
     const projectedReturn = (daysLeft * this.state.average * state.oneEthInGbp) - contractCostInGbp;
     const projectedProfitPercent = (contractCostInGbp / 100) * projectedReturn;
     const chartData = state.data.slice().reverse()
-                                .map((d, i) => ({ name: 'day '+ i, value: +d.balance }))
+                                .map((d, i) => ({ name: i, balance: +d.balance }))
+                                .map((d, i) => {
+                                  if (i == 0 || i == state.data.length-1) {
+                                    return {
+                                      ...d,
+                                      foo: d.balance
+                                    }
+                                  }
+                                  return d;
+                                });
 
     return (
       <div>
-        <textarea cols='100' rows='30' onChange={this.handleChange}></textarea>
-        <p>Average payback per day: £{averagePerDayProfitGbp} ({this.state.average.toFixed(4)} ETH) over {state.data.length} days </p>
-        <p>Purchase: £{contractCostInGbp}</p>
-        <p>Current accrued payback: £{accruedPayback}</p>
-        <p>Projected profit if price remains: £{projectedReturn.toFixed(2)} {projectedProfitPercent.toFixed(2)}% ({daysLeft} days left)</p>
-        <sub>Based on ETH/GBP {state.oneEthInGbp}</sub>
-        <LineChart width={400} height={400} data={chartData}>
-         <XAxis dataKey="name"/>
-         <YAxis/>
+        <h1>Genesis (crypto) mining plan forecaster</h1>
+        <p>Show stats in: <select><option defaultValue>GBP</option></select></p>
+        <p>Copy and paste similar data from your orders page to forecast your returns</p>
+        <p><a href='https://www.genesis-mining.com/my-orders'>https://www.genesis-mining.com/my-orders</a></p>
+        <textarea cols='90' rows='10' onChange={this.handleChange} value={mockData}></textarea>
+        <p>Average payback per day: <strong>{averagePerDayProfitGbp} GBP ({this.state.average.toFixed(4)} ETH) over {state.data.length} days</strong></p>
+        <p>Acquisition cost: <input value={contractCostInGbp}></input><select><option selected>GBP</option></select></p>
+        <p>Current accrued payback: {accruedPayback} GBP {accruedPaybackAsPercentage}%</p>
+        <p>Projected profit if price remains: {projectedReturn.toFixed(2)} GBP ☀️ {projectedProfitPercent.toFixed(2)}% ({daysLeft} days left)</p>
+        <sub>Based on {state.oneEthInGbp} ETH/GBP</sub>
+        <LineChart width={600} height={400} data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+         <XAxis label="Days" height={100} dataKey="name"/>
+         <YAxis label="ETH" orientation='right' width={140} />
          <Tooltip/>
-         <Legend />
+         <Legend content={() => 'ETH mining history per day'} verticalAlign='top' align='left' height={30} />
          <CartesianGrid strokeDasharray="3 3"/>
-          <Line type='monotone' dataKey='value' stroke='#8884d8' />
+         <Line type='monotone' dataKey='balance' stroke='#8884d8' />
+         <Line type='monotone' connectNulls={true} dataKey='foo' stroke='#4d84d8' />
         </LineChart>
       </div>
     );
