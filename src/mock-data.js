@@ -1,4 +1,6 @@
-const data = `dagger-hashimoto ETH balance of 0.0016951 added to your account on 2017-07-07T12:00:00+00:00
+const data = `dagger-hashimoto ETH balance of 0.0016023 added to your account on 2017-07-09T12:00:00+00:00
+dagger-hashimoto ETH balance of 0.00165334 added to your account on 2017-07-08T12:00:00+00:00
+dagger-hashimoto ETH balance of 0.0016951 added to your account on 2017-07-07T12:00:00+00:00
 dagger-hashimoto ETH balance of 0.00166856 added to your account on 2017-07-06T12:00:00+00:00
 dagger-hashimoto ETH balance of 0.0017229 added to your account on 2017-07-05T12:00:00+00:00
 dagger-hashimoto ETH balance of 0.00169985 added to your account on 2017-07-04T12:00:00+00:00
@@ -18,6 +20,6 @@ dagger-hashimoto ETH balance of 0.00198738 added to your account on 2017-06-21T1
 dagger-hashimoto ETH balance of 0.00207365 added to your account on 2017-06-20T12:00:00+00:00
 dagger-hashimoto ETH balance of 0.00227133 added to your account on 2017-06-19T12:00:00+00:00
 dagger-hashimoto ETH balance of 0.00222747 added to your account on 2017-06-18T12:00:00+00:00
-dagger-hashimoto ETH balance of 0.0021905 added to your account on 2017-06-17T12:00:00+00:00`;
+dagger-hashimoto ETH balance of 0.0021905 added to your account on 2017-06-17T12:00:00+00:00`
 
-export default data;
+export default data

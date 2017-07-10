@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "gh-pages": "^1.0.0",
+    "ramda": "^0.24.1",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "recharts": "^1.0.0-alpha.1",

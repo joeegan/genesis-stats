@@ -1,17 +1,36 @@
 body {
-  margin: 10px;
+  margin: 0;
   padding: 0;
-  font-family: 'Droid Sans Mono', monospace !important;
+  font-family: 'Open Sans', sans-serif;
   color: #333;
   font-size: 12px;
   background: #fffbf5;
 }
 
- * {
-   text-align: center;
- }
+.droid-sans {
+  font-family: 'Droid Sans Mono', monospace !important;
+}
+
+textarea {
+  color: grey;
+}
 
 h1 {
-  color: #F5B143;
-  font-size: 12px;
+  background: white;
+  border-bottom: 1px solid #F5B143;
+  padding: 10px;
+  margin: 0;
+}
+
+a {
+  color: grey;
+}
+.input {
+  padding: 10px;
+}
+.output {
+  background: white;
+  border-top: 1px solid #F5B143;
+  padding: 10px;
+  margin: 0;
 }
