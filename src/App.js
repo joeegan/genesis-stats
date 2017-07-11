@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import './App.css'
-import Chart from './Chart'
-import mockData from './mock-data'
-import { Line } from 'recharts'
+import Statistics from './components/Statistics'
+import Forecasting from './components/Forecasting'
+import Form from './components/Form'
 import R from 'ramda'
+import mockData from './mock-data'
+import processData from './DataProcessor'
 import { stringMerge } from './string'
 
-const HISTORY_URL =
-  'https://min-api.cryptocompare.com/data/histoday?fsym={fromCurrency}&tsym={toCurrency}&limit={limit}&aggregate=3&e=CCCAGG'
-const PRICE_URL =
+const EXCHANGE_RATE_URL =
   'https://min-api.cryptocompare.com/data/price?fsym={fromCurrency}&tsyms={toCurrency}'
 
 class App extends Component {
@@ -23,64 +23,64 @@ class App extends Component {
       ethGbpData: [],
       fromCurrency: 'ETH',
       toCurrency: 'GBP',
+      contractCostInGbp: 100,
+      averagePerDayProfitGbp: 0,
+      accruedPayback: 0,
+      accruedPaybackAsPercentage: 0,
+      daysLeft: 0,
+      projectedReturn: 0,
+      projectedProfitPercent: 0,
     }
     this.handleChange = this.handleChange.bind(this)
-    this.processData = this.processData.bind(this)
   }
 
   componentDidMount() {
+    const { state } = this
+    const daysLeft = R.subtract(
+      R.multiply(365, 2),
+      state.data.length
+    )
     fetch(
-      stringMerge(PRICE_URL, {
-        fromCurrency: this.state.fromCurrency,
-        toCurrency: this.state.toCurrency,
+      stringMerge(EXCHANGE_RATE_URL, {
+        fromCurrency: state.fromCurrency,
+        toCurrency: state.toCurrency,
       })
-    ).then(response => {
-      return response.json().then(json => {
-        this.setState({
+    ).then(exchangeRateData => {
+      return exchangeRateData.json().then(json => {
+        processData(mockData, {
           oneEthInGbp: json.GBP,
-        })
-        this.processData(mockData)
+          daysLeft,
+          contractCostInGbp: state.contractCostInGbp,
+          fromCurrency: state.fromCurrency,
+          toCurrency: state.toCurrency,
+        }).then(data => this.setState(data))
       })
     })
   }
 
-  processData(str) {
-    const data = str.split('\n').reverse().map(row => {
-      const splitRow = row.split(' ')
+  handleChange({ target }) {
+    processData(target.value).then(data =>
+      this.setState(data)
+    )
+  }
+
+  // TODO: Move from here
+  get historyData() {
+    return this.state.data.slice().map(({ balance }, i) => {
+      const { data } = this.state
+      const sumOfPreviousDays = R.pipe(
+        R.pluck('balance'),
+        R.sum
+      )(data.slice(0, i))
       return {
-        currency: splitRow[1],
-        balance: splitRow[4],
-        date: splitRow[10],
+        day: i + 1,
+        balance: +balance,
+        gbpValue: R.find(R.propEq('day', i))(
+          this.state.ethGbpData
+        ).price,
+        average: R.divide(sumOfPreviousDays, i) || +balance,
       }
     })
-    const totalEth = R.pipe(R.pluck('balance'), R.sum)(data)
-    const average = R.mean(R.pluck('balance')(data))
-
-    fetch(
-      stringMerge(HISTORY_URL, {
-        fromCurrency: this.state.fromCurrency,
-        toCurrency: this.state.toCurrency,
-        limit: data.length,
-      })
-    ).then(response => {
-      return response.json().then(json => {
-        this.setState({
-          data,
-          average,
-          totalEth,
-          ethGbpData: json.Data.map(
-            ({ open: price }, i) => ({
-              price,
-              day: i,
-            })
-          ),
-        })
-      })
-    })
-  }
-
-  handleChange(event) {
-    this.processData(event.target.value)
   }
 
   get rows() {
@@ -90,69 +90,25 @@ class App extends Component {
   }
 
   render() {
+    // TODO move all non rendering away from here
     const { state } = this
-    const contractCostInGbp = 100
-    const averagePerDayProfitGbp = R.multiply(
-      state.average,
-      state.oneEthInGbp
-    ).toFixed(2)
-    const accruedPayback = R.multiply(
-      state.totalEth,
-      state.oneEthInGbp
-    ).toFixed(2)
-    const accruedPaybackAsPercentage = R.multiply(
-      R.divide(contractCostInGbp, 100),
-      accruedPayback
-    )
-    const daysLeft = R.subtract(
-      R.multiply(365, 2),
-      state.data.length
-    )
-    const projectedReturn = R.subtract(
-      R.multiply(
-        daysLeft,
-        state.average,
-        state.oneEthInGbp
-      ),
-      contractCostInGbp
-    )
-    const projectedProfitPercent =
-      contractCostInGbp / 100 * projectedReturn
-    const historyData = state.data
-      .slice()
-      .map(({ balance }, i) => {
-        const { data } = state
-        const sumOfPreviousDays = R.pipe(
-          R.pluck('balance'),
-          R.sum
-        )(data.slice(0, i))
-        return {
-          day: i + 1,
-          balance: +balance,
-          gbpValue: R.find(R.propEq('day', i))(
-            state.ethGbpData
-          ).price,
-          average: R.divide(sumOfPreviousDays, i) ||
-            +balance,
-        }
-      })
-
     let forecastData = []
-    if (historyData.length) {
+    if (this.historyData.length) {
       const emptyArr = new Array(
-        daysLeft - state.data.length
+        state.daysLeft - state.data.length
       ).fill(0)
       const historicalMovements = state.data.map(
         ({ balance }, i, arr) =>
           balance - (arr[i - 1] || arr[0]).balance
       )
-      const averageMovement =
-        R.sum(historicalMovements) /
+      const averageMovement = R.mean(
+        historicalMovements,
         historicalMovements.length
+      )
 
       let prevBalance =
         state.data[state.data.length - 1].balance
-      const _foreCastData = emptyArr.map((item, i) => {
+      const _forecastData = emptyArr.map((item, i) => {
         const balance = +averageMovement + +prevBalance
         prevBalance = balance
         return {
@@ -160,164 +116,43 @@ class App extends Component {
           balance,
         }
       })
-      forecastData = historyData.concat(_foreCastData)
+      forecastData = this.historyData.concat(_forecastData)
     }
 
     return (
       <div>
-        <h1>
-          Crypto mining contract analysis and forecasting
-        </h1>
-        <div className="input">
-
-          <p>
-            Show stats in:
-            {' '}
-            <select>
-              <option defaultValue>
-                {this.state.toCurrency}
-              </option>
-            </select>
-          </p>
-          <p>
-            Paste in your orders data from
-            {' '}
-            <a href="https://www.genesis-mining.com/my-orders">
-              genesis-mining.com/my-orders
-            </a>:
-          </p>
-          <textarea
-            cols="120"
-            rows="10"
-            onChange={this.handleChange}
-            value={mockData}
-          />
-          <p>
-            How much did your contract cost?
-            {' '}
-            <input readOnly value={contractCostInGbp} />
-            <select>
-              <option defaultValue>GBP</option>
-            </select>
-          </p>
-          <p>
-            When does your contract end?
-            {' '}
-            <input
-              type="date"
-              readOnly
-              value="2019-06-16"
-            />
-          </p>
-        </div>
+        <Form
+          toCurrency={this.state.toCurrency}
+          handleChange={this.handleChange}
+          contractCostInGbp={state.contractCostInGbp}
+        />
         <div className="output">
-          <h2>Statistics</h2>
-          <p>
-            Average payback per day: <strong>
-              {averagePerDayProfitGbp}GBP (
-              {this.state.average.toFixed(4)}
-              ETH ) over {state.data.length} days
-            </strong>
-          </p>
-          <p>
-            Current accrued payback:
-            {' '}
-            {accruedPayback}
-            {' '}
-            GBP
-            {' '}
-            {accruedPaybackAsPercentage}
-            %
-          </p>
-          <Chart
-            data={historyData}
-            yAxisLabel="ETH"
-            legendTitle="ETH mining history per day"
-            lines={[
-              <Line
-                key="a"
-                type="monotone"
-                dataKey="balance"
-                stroke="#8884d8"
-              />,
-              <Line
-                key="b"
-                type="monotone"
-                dataKey="average"
-                stroke="#4d84d8"
-                dot={false}
-              />,
-            ]}
+          <Statistics
+            accruedPayback={state.accruedPayback}
+            accruedPaybackAsPercentage={
+              state.accruedPaybackAsPercentage
+            }
+            averagePerDayProfitGbp={
+              state.averagePerDayProfitGbp
+            }
+            average={state.average}
+            daysLength={state.data.length}
+            historyData={this.historyData}
+            ethGbpData={state.ethGbpData}
           />
-
-          <Chart
-            data={historyData}
-            yAxisLabel="GBP"
-            legendTitle="GBP value of ETH mining per day"
-            lines={[
-              <Line
-                key="a"
-                type="monotone"
-                dataKey="gbpValue"
-                stroke="#4d84d8"
-                dot={false}
-              />,
-            ]}
-          />
-
-          <Chart
-            data={this.state.ethGbpData}
-            yAxisLabel="GBP"
-            legendTitle="ETH/GBP since contract acquired"
-            lines={[
-              <Line
-                key="a"
-                type="monotone"
-                dataKey="price"
-                stroke="#4d84d8"
-                dot={false}
-              />,
-            ]}
-          />
-          <h2>Forecasting</h2>
-          <p>
-            Projected profit if ETH/GBP price remains:
-            {projectedReturn.toFixed(2)}
-            GBP ☀️
-            {projectedProfitPercent.toFixed(2)}
-            {daysLeft}
-            days left)
-          </p>
-          <sub>
-            Based on
-            {state.oneEthInGbp}
-            ETH/GBP (
-            {new Date()
-              .toISOString()
-              .replace(/[A-Z]/g, ' ')
-              .substring(0, 19)}
-            )
-          </sub>
-
-          <Chart
-            data={forecastData}
-            yAxisLabel="ETH"
-            legendTitle="ETH mining forecast"
-            lines={[
-              <Line
-                key="a"
-                type="monotone"
-                dataKey="balance"
-                stroke="#4d84d8"
-                dot={false}
-              />,
-            ]}
+          <Forecasting
+            projectedReturn={state.projectedReturn}
+            projectedProfitPercent={
+              state.projectedProfitPercent
+            }
+            daysLeft={state.daysLeft}
+            oneEthInGbp={state.oneEthInGbp}
+            daysLength={state.data.length}
+            forecastData={forecastData}
           />
         </div>
-
       </div>
     )
   }
 }
-
 export default App
