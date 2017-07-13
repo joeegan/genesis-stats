@@ -3,7 +3,16 @@ import './App.css'
 import Statistics from './components/Statistics'
 import Forecasting from './components/Forecasting'
 import Form from './components/Form'
-import R from 'ramda'
+import {
+  find,
+  propEq,
+  divide,
+  multiply,
+  subtract,
+  pipe,
+  pluck,
+  sum,
+} from 'ramda'
 import mockData from './mock-data'
 import processData from './DataProcessor'
 import { stringMerge } from './string'
@@ -15,7 +24,7 @@ class App extends Component {
   constructor() {
     super()
     this.state = {
-      data: [],
+      sentenceData: [],
       average: 0,
       averageInGbp: 0,
       oneEthInGbp: 0,
@@ -30,16 +39,13 @@ class App extends Component {
       daysLeft: 0,
       projectedReturn: 0,
       projectedProfitPercent: 0,
+      historicalData: [],
     }
     this.handleChange = this.handleChange.bind(this)
   }
 
   componentDidMount() {
     const { state } = this
-    const daysLeft = R.subtract(
-      R.multiply(365, 2),
-      state.data.length
-    )
     fetch(
       stringMerge(EXCHANGE_RATE_URL, {
         fromCurrency: state.fromCurrency,
@@ -49,7 +55,10 @@ class App extends Component {
       return exchangeRateData.json().then(json => {
         processData(mockData, {
           oneEthInGbp: json.GBP,
-          daysLeft,
+          daysLeft: subtract(
+            multiply(365, 2),
+            state.sentenceData.length
+          ),
           contractCostInGbp: state.contractCostInGbp,
           fromCurrency: state.fromCurrency,
           toCurrency: state.toCurrency,
@@ -65,65 +74,23 @@ class App extends Component {
   }
 
   // TODO: Move from here
-  get historyData() {
-    return this.state.data.slice().map(({ balance }, i) => {
-      const { data } = this.state
-      const sumOfPreviousDays = R.pipe(
-        R.pluck('balance'),
-        R.sum
-      )(data.slice(0, i))
-      return {
-        day: i + 1,
-        balance: +balance,
-        gbpValue: R.find(R.propEq('day', i))(
-          this.state.ethGbpData
-        ).price,
-        average: R.divide(sumOfPreviousDays, i) || +balance,
-      }
-    })
+  get historicalData() {
+    return this.state
   }
 
   get rows() {
-    return this.state.data.map(o => (
+    return this.state.sentenceData.map(o => (
       <p className="rows">{o.balance}</p>
     ))
   }
 
   render() {
-    // TODO move all non rendering away from here
-    const { state } = this
-    let forecastData = []
-    if (this.historyData.length) {
-      const emptyArr = new Array(
-        state.daysLeft - state.data.length
-      ).fill(0)
-      const historicalMovements = state.data.map(
-        ({ balance }, i, arr) =>
-          balance - (arr[i - 1] || arr[0]).balance
-      )
-      const averageMovement = R.mean(
-        historicalMovements,
-        historicalMovements.length
-      )
-
-      let prevBalance =
-        state.data[state.data.length - 1].balance
-      const _forecastData = emptyArr.map((item, i) => {
-        const balance = +averageMovement + +prevBalance
-        prevBalance = balance
-        return {
-          day: state.data.length + i,
-          balance,
-        }
-      })
-      forecastData = this.historyData.concat(_forecastData)
-    }
-
+    const { state, handleChange } = this
     return (
       <div>
         <Form
-          toCurrency={this.state.toCurrency}
-          handleChange={this.handleChange}
+          toCurrency={state.toCurrency}
+          handleChange={handleChange}
           contractCostInGbp={state.contractCostInGbp}
         />
         <div className="output">
@@ -136,8 +103,8 @@ class App extends Component {
               state.averagePerDayProfitGbp
             }
             average={state.average}
-            daysLength={state.data.length}
-            historyData={this.historyData}
+            daysLength={state.sentenceData.length}
+            historicalData={state.historicalData}
             ethGbpData={state.ethGbpData}
           />
           <Forecasting
@@ -147,8 +114,8 @@ class App extends Component {
             }
             daysLeft={state.daysLeft}
             oneEthInGbp={state.oneEthInGbp}
-            daysLength={state.data.length}
-            forecastData={forecastData}
+            daysLength={state.sentenceData.length}
+            historicalData={state.historicalData}
           />
         </div>
       </div>

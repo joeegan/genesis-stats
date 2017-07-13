@@ -1,6 +1,37 @@
 import React from 'react'
 import Chart from './Chart'
 import { Line } from 'recharts'
+import { mean } from 'ramda'
+
+const forecastData = (historicalData, daysLeft) => {
+  let forecastData = []
+  if (historicalData.length) {
+    const historicalMovements = historicalData.map(
+      ({ balance }, i, arr) =>
+        balance - (arr[i - 1] || arr[0]).balance
+    )
+    const averageMovement = mean(
+      historicalMovements,
+      historicalMovements.length
+    )
+    let prevBalance =
+      historicalData[historicalData.length - 1].balance
+    const _forecastData = new Array(
+      daysLeft - historicalData.length
+    )
+      .fill(0)
+      .map((item, i) => {
+        const balance = +averageMovement + +prevBalance
+        prevBalance = balance
+        return {
+          day: historicalData.length + i,
+          balance,
+        }
+      })
+    forecastData = historicalData.concat(_forecastData)
+  }
+  return forecastData
+}
 
 const Forecasting = ({
   projectedReturn,
@@ -8,7 +39,7 @@ const Forecasting = ({
   daysLeft,
   oneEthInGbp,
   daysLength,
-  forecastData,
+  historicalData,
 }) => {
   return (
     <div>
@@ -33,7 +64,7 @@ const Forecasting = ({
       </sub>
 
       <Chart
-        data={forecastData}
+        data={forecastData(historicalData, daysLeft)}
         yAxisLabel="ETH"
         legendTitle="ETH mining forecast"
         lines={[

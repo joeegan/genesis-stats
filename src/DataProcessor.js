@@ -1,4 +1,14 @@
-import R from 'ramda'
+import {
+  find,
+  propEq,
+  divide,
+  multiply,
+  mean,
+  subtract,
+  pipe,
+  pluck,
+  sum,
+} from 'ramda'
 import { stringMerge } from './string'
 const HISTORY_URL =
   'https://min-api.cryptocompare.com/data/histoday?fsym={fromCurrency}&tsym={toCurrency}&limit={limit}&aggregate=3&e=CCCAGG'
@@ -22,8 +32,8 @@ const processData = (
         date: splitRow[10],
       }
     })
-    const totalEth = R.pipe(R.pluck('balance'), R.sum)(data)
-    const average = R.mean(R.pluck('balance')(data))
+    const totalEth = pipe(pluck('balance'), sum)(data)
+    const average = mean(pluck('balance')(data))
 
     fetch(
       stringMerge(HISTORY_URL, {
@@ -33,39 +43,53 @@ const processData = (
       })
     ).then(response => {
       return response.json().then(json => {
-        const projectedReturn = R.subtract(
-          R.multiply(daysLeft, average, oneEthInGbp),
+        const projectedReturn = subtract(
+          multiply(daysLeft, average, oneEthInGbp),
           contractCostInGbp
         )
-        const accruedPayback = R.multiply(
+        const accruedPayback = multiply(
           totalEth,
           oneEthInGbp
         ).toFixed(2)
 
+        const ethGbpData = json.Data.map(
+          ({ open: price }, i) => ({
+            price,
+            day: i,
+          })
+        )
+
         resolve({
-          data,
+          historicalData: data
+            .slice()
+            .map(({ balance }, i) => {
+              const sumOfPreviousDays = pipe(
+                pluck('balance'),
+                sum
+              )(data.slice(0, i))
+              return {
+                day: i + 1,
+                balance: +balance,
+                gbpValue: find(propEq('day', i))(ethGbpData)
+                  .price,
+                average: divide(sumOfPreviousDays, i) ||
+                  +balance,
+              }
+            }),
           average,
           totalEth,
           oneEthInGbp,
-          ethGbpData: json.Data.map(
-            ({ open: price }, i) => ({
-              price,
-              day: i,
-            })
-          ),
-          averagePerDayProfitGbp: R.multiply(
+          ethGbpData,
+          averagePerDayProfitGbp: multiply(
             average,
             oneEthInGbp
           ).toFixed(2),
           accruedPayback,
-          accruedPaybackAsPercentage: R.multiply(
-            R.divide(contractCostInGbp, 100),
+          accruedPaybackAsPercentage: multiply(
+            divide(contractCostInGbp, 100),
             accruedPayback
           ),
-          daysLeft: R.subtract(
-            R.multiply(365, 2),
-            data.length
-          ),
+          daysLeft: subtract(multiply(365, 2), data.length),
           projectedReturn,
           projectedProfitPercent: contractCostInGbp /
             100 *

@@ -8,7 +8,7 @@ const Statistics = ({
   averagePerDayProfitGbp,
   average,
   daysLength,
-  historyData,
+  historicalData,
   ethGbpData,
 }) => {
   return (
@@ -31,8 +31,8 @@ const Statistics = ({
           ETH ) over {daysLength} days
         </strong>
       </p>
-      {miningHistoryPerDayChart(historyData)}
-      {miningHistoryInToCurrencyChart(historyData)}
+      {miningHistoryPerDayChart(historicalData)}
+      {miningHistoryInToCurrencyChart(historicalData)}
       {toFromPairSinceContractAquired(ethGbpData)}
     </div>
   )
