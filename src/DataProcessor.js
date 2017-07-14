@@ -1,20 +1,34 @@
 import {
+  addIndex,
   find,
   propEq,
   divide,
+  inc,
+  map,
   multiply,
   mean,
+  or,
   subtract,
   pipe,
   pluck,
+  prop,
+  reverse,
   sum,
+  split,
+  slice,
+  view,
+  lensIndex,
 } from 'ramda'
+
 import { stringMerge } from './string'
+
 const HISTORY_URL =
   'https://min-api.cryptocompare.com/data/histoday?fsym={fromCurrency}&tsym={toCurrency}&limit={limit}&aggregate=3&e=CCCAGG'
+const daysInYear = 365
+const contractInYears = 2
 
 const processData = (
-  str,
+  str, // the sentence data pasted into the input
   {
     oneEthInGbp,
     daysLeft,
@@ -22,82 +36,76 @@ const processData = (
     fromCurrency,
     toCurrency,
   }
-) => {
-  return new Promise((resolve, reject) => {
-    const data = str.split('\n').reverse().map(row => {
-      const splitRow = row.split(' ')
-      return {
-        currency: splitRow[1],
-        balance: splitRow[4],
-        date: splitRow[10],
-      }
-    })
-    const totalEth = pipe(pluck('balance'), sum)(data)
-    const average = mean(pluck('balance')(data))
-
+) =>
+  new Promise(resolve => {
+    const balances = map(
+      sentence => view(lensIndex(4), split(' ', sentence)),
+      reverse(split('\n', str))
+    )
     fetch(
       stringMerge(HISTORY_URL, {
         fromCurrency,
         toCurrency,
-        limit: data.length,
+        limit: prop('length', balances),
       })
     ).then(response => {
       return response.json().then(json => {
-        const projectedReturn = subtract(
-          multiply(daysLeft, average, oneEthInGbp),
+        const projectedProfit = subtract(
+          multiply(daysLeft, mean(balances), oneEthInGbp),
           contractCostInGbp
         )
         const accruedPayback = multiply(
-          totalEth,
+          sum(balances),
           oneEthInGbp
-        ).toFixed(2)
-
-        const ethGbpData = json.Data.map(
+        )
+        const ethGbpData = addIndex(map)(
           ({ open: price }, i) => ({
             price,
             day: i,
-          })
+          }),
+          json.Data
         )
 
         resolve({
-          historicalData: data
-            .slice()
-            .map(({ balance }, i) => {
-              const sumOfPreviousDays = pipe(
-                pluck('balance'),
-                sum
-              )(data.slice(0, i))
-              return {
-                day: i + 1,
-                balance: +balance,
-                gbpValue: find(propEq('day', i))(ethGbpData)
-                  .price,
-                average: divide(sumOfPreviousDays, i) ||
-                  +balance,
-              }
-            }),
-          average,
-          totalEth,
+          historicalData: addIndex(map)((balance, i) => {
+            return {
+              day: inc(i),
+              balance: +balance,
+              gbpValue: prop(
+                'price',
+                find(propEq('day', i), ethGbpData)
+              ),
+              average: or(
+                divide(sum(slice(0, i, balances)), i),
+                +balance
+              ),
+            }
+          }, balances),
+          average: mean(balances),
+          totalEth: sum(balances),
           oneEthInGbp,
           ethGbpData,
           averagePerDayProfitGbp: multiply(
-            average,
+            mean(balances),
             oneEthInGbp
-          ).toFixed(2),
+          ),
           accruedPayback,
           accruedPaybackAsPercentage: multiply(
             divide(contractCostInGbp, 100),
             accruedPayback
           ),
-          daysLeft: subtract(multiply(365, 2), data.length),
-          projectedReturn,
-          projectedProfitPercent: contractCostInGbp /
-            100 *
-            projectedReturn,
+          daysLeft: subtract(
+            multiply(daysInYear, contractInYears),
+            prop('length', balances)
+          ),
+          projectedProfit,
+          projectedProfitPercent: divide(
+            contractCostInGbp,
+            multiply(100, projectedProfit)
+          ),
         })
       })
     })
   })
-}
 
 export default processData

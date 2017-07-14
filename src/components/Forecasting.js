@@ -34,7 +34,7 @@ const forecastData = (historicalData, daysLeft) => {
 }
 
 const Forecasting = ({
-  projectedReturn,
+  projectedProfit,
   projectedProfitPercent,
   daysLeft,
   oneEthInGbp,
@@ -46,7 +46,7 @@ const Forecasting = ({
       <h2>Forecasting <span>🤔</span></h2>
       <p>
         Projected profit if ETH/GBP price remains:
-        {projectedReturn.toFixed(2)}
+        {projectedProfit.toFixed(2)}
         GBP ☀️
         {projectedProfitPercent.toFixed(2)}
         {daysLeft}

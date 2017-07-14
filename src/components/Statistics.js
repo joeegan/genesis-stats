@@ -17,7 +17,7 @@ const Statistics = ({
       <p>
         Current accrued payback:
         {' '}
-        {accruedPayback}
+        {accruedPayback.toFixed(2)}
         {' '}
         GBP
         {' '}

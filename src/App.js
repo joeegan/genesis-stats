@@ -37,7 +37,7 @@ class App extends Component {
       accruedPayback: 0,
       accruedPaybackAsPercentage: 0,
       daysLeft: 0,
-      projectedReturn: 0,
+      projectedProfit: 0,
       projectedProfitPercent: 0,
       historicalData: [],
     }
@@ -108,7 +108,7 @@ class App extends Component {
             ethGbpData={state.ethGbpData}
           />
           <Forecasting
-            projectedReturn={state.projectedReturn}
+            projectedProfit={state.projectedProfit}
             projectedProfitPercent={
               state.projectedProfitPercent
             }
