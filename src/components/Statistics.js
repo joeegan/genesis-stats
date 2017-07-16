@@ -33,7 +33,7 @@ const Statistics = ({
       </p>
       {miningHistoryPerDayChart(historicalData)}
       {miningHistoryInToCurrencyChart(historicalData)}
-      {toFromPairSinceContractAquired(ethGbpData)}
+      {currencyPairSinceContractAcquired(ethGbpData)}
     </div>
   )
 }
@@ -79,7 +79,7 @@ const miningHistoryInToCurrencyChart = data => {
     />
   )
 }
-const toFromPairSinceContractAquired = data => {
+const currencyPairSinceContractAcquired = data => {
   return (
     <Chart
       data={data}

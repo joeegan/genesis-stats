@@ -1,5 +1,5 @@
 import React from 'react'
-import mockData from '../mock-data'
+import mockData from '../mocks/historical'
 
 const Form = ({
   toCurrency,

@@ -4,18 +4,24 @@ import Statistics from './components/Statistics'
 import Forecasting from './components/Forecasting'
 import Form from './components/Form'
 import {
+  bind,
   find,
   propEq,
   divide,
+  isEmpty,
   multiply,
+  length,
   subtract,
+  pick,
   pipe,
   pluck,
+  prop,
+  props,
   sum,
 } from 'ramda'
-import mockData from './mock-data'
-import processData from './DataProcessor'
-import { stringMerge } from './string'
+import mockData from './mocks/historical'
+import processData from './functions/data-processor'
+import { stringMerge } from './functions/string'
 
 const EXCHANGE_RATE_URL =
   'https://min-api.cryptocompare.com/data/price?fsym={fromCurrency}&tsyms={toCurrency}'
@@ -24,7 +30,6 @@ class App extends Component {
   constructor() {
     super()
     this.state = {
-      sentenceData: [],
       average: 0,
       averageInGbp: 0,
       oneEthInGbp: 0,
@@ -39,26 +44,27 @@ class App extends Component {
       daysLeft: 0,
       projectedProfit: 0,
       projectedProfitPercent: 0,
-      historicalData: [],
+      historicalData: [], // just balances
     }
-    this.handleChange = this.handleChange.bind(this)
+    this.handleChange = bind(this.handleChange, this)
   }
 
   componentDidMount() {
     const { state } = this
     fetch(
-      stringMerge(EXCHANGE_RATE_URL, {
-        fromCurrency: state.fromCurrency,
-        toCurrency: state.toCurrency,
-      })
+      stringMerge(
+        EXCHANGE_RATE_URL,
+        pick(['fromCurrency', 'toCurrency'], state)
+      )
     ).then(exchangeRateData => {
       return exchangeRateData.json().then(json => {
         processData(mockData, {
           oneEthInGbp: json.GBP,
           daysLeft: subtract(
             multiply(365, 2),
-            state.sentenceData.length
+            length(state.historicalData)
           ),
+          // todo merge
           contractCostInGbp: state.contractCostInGbp,
           fromCurrency: state.fromCurrency,
           toCurrency: state.toCurrency,
@@ -73,15 +79,23 @@ class App extends Component {
     )
   }
 
-  // TODO: Move from here
-  get historicalData() {
-    return this.state
-  }
-
-  get rows() {
-    return this.state.sentenceData.map(o => (
-      <p className="rows">{o.balance}</p>
-    ))
+  get forecast() {
+    const { state } = this
+    if (isEmpty(state.historicalData)) {
+      return null
+    }
+    return (
+      <Forecasting
+        projectedProfit={state.projectedProfit}
+        projectedProfitPercent={
+          state.projectedProfitPercent
+        }
+        daysLeft={state.daysLeft}
+        oneEthInGbp={state.oneEthInGbp}
+        daysLength={length(state.historicalData)}
+        historicalData={state.historicalData}
+      />
+    )
   }
 
   render() {
@@ -103,20 +117,11 @@ class App extends Component {
               state.averagePerDayProfitGbp
             }
             average={state.average}
-            daysLength={state.sentenceData.length}
+            daysLength={state.historicalData.length}
             historicalData={state.historicalData}
             ethGbpData={state.ethGbpData}
           />
-          <Forecasting
-            projectedProfit={state.projectedProfit}
-            projectedProfitPercent={
-              state.projectedProfitPercent
-            }
-            daysLeft={state.daysLeft}
-            oneEthInGbp={state.oneEthInGbp}
-            daysLength={state.sentenceData.length}
-            historicalData={state.historicalData}
-          />
+          {this.forecast}
         </div>
       </div>
     )
