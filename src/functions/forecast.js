@@ -7,7 +7,6 @@ import {
   inc,
   map,
   mean,
-  or,
   subtract,
   last,
   length,
@@ -16,25 +15,35 @@ import {
   times,
 } from 'ramda'
 
-const forecastData = (historicalData, daysLeft) => {
+const forecast = (historicalData, daysLeft) => {
   const averageMovement = mean(
     addIndex(map)((balance, i, arr) =>
-      subtract(balance, arr[dec(i)] || head(arr))
-    )(pluck('balance', historicalData))
+      subtract(balance, arr[dec(i)] || 0),
+    )(pluck('balance', historicalData)),
   )
 
-  let prevBalance = prop('balance', last(historicalData))
   return concat(
     historicalData,
-    times((item, i) => {
-      const balance = add(+averageMovement, +prevBalance)
-      prevBalance = balance
-      return {
-        day: inc(length(historicalData)),
-        balance,
-      }
-    }, subtract(daysLeft, length(historicalData)))
+    times(
+      i => ({
+        day: add(inc(i), prop('day', last(historicalData))),
+      }),
+      daysLeft,
+    ).reduce((acc, curr, i, arr) => {
+      acc.push({
+        ...curr,
+        balance: add(
+          averageMovement,
+          prop('balance')(
+            acc[dec(i)]
+              ? acc[dec(i)]
+              : last(historicalData),
+          ),
+        ),
+      })
+      return acc
+    }, []),
   )
 }
 
-export default forecastData
+export default forecast

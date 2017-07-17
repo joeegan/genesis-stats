@@ -7,23 +7,31 @@ const Forecasting = ({
   projectedProfit,
   projectedProfitPercent,
   daysLeft,
-  oneEthInGbp,
+  exchangeRate,
   daysLength,
   historicalData,
-}) => (
+}) =>
   <div>
-    <h2>Forecasting <span>🤔</span></h2>
+    <h2>
+      Forecasting
+      <span role="img" aria-label="thinking emoji">
+        🤔
+      </span>
+    </h2>
     <p>
       Projected profit if ETH/GBP price remains:
       {projectedProfit.toFixed(2)}
-      GBP <span>☀️</span>
+      GBP
+      <span role="img" aria-label="sun emoji">
+        ☀️
+      </span>
       {projectedProfitPercent.toFixed(2)}
       {daysLeft}
       days left)
     </p>
     <sub>
       Based on
-      {oneEthInGbp}
+      {exchangeRate}
       ETH/GBP (
       {new Date()
         .toISOString()
@@ -47,5 +55,4 @@ const Forecasting = ({
       ]}
     />
   </div>
-)
 export default Forecasting

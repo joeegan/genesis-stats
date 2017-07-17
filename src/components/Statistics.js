@@ -13,7 +13,11 @@ const Statistics = ({
 }) => {
   return (
     <div>
-      <h2>Statistics <span>📈</span></h2>
+      <h2>
+        Statistics
+        {' '}
+        <span role="img" aria-label="statistics">📈</span>
+      </h2>
       <p>
         Current accrued payback:
         {' '}

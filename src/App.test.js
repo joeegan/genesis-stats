@@ -5,7 +5,7 @@ import App from './App'
 window.fetch = jest.fn().mockImplementation(() =>
   Promise.resolve({
     json: () => Promise.resolve({ GBP: 1 }),
-  })
+  }),
 )
 
 it('renders without crashing', () => {

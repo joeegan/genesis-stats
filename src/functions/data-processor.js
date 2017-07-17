@@ -9,8 +9,6 @@ import {
   mean,
   or,
   subtract,
-  pipe,
-  pluck,
   prop,
   reverse,
   sum,
@@ -19,89 +17,95 @@ import {
   view,
   lensIndex,
 } from 'ramda'
+import { percent } from './maths'
 
 import { stringMerge } from './string'
 
 const HISTORY_URL =
-  'https://min-api.cryptocompare.com/data/histoday?fsym={fromCurrency}&tsym={toCurrency}&limit={limit}&aggregate=3&e=CCCAGG'
+  'https://min-api.cryptocompare.com/data/histoday?fsym={minedCurrencyCode}&tsym={analysisCurrencyCode}&limit={limit}&aggregate=3&e=CCCAGG'
 const daysInYear = 365
 const contractInYears = 2
 
 const processData = (
   str, // the sentence data pasted into the input
   {
-    oneEthInGbp,
+    exchangeRate,
     daysLeft,
     contractCostInGbp,
-    fromCurrency,
-    toCurrency,
-  }
+    minedCurrencyCode,
+    analysisCurrencyCode,
+  },
 ) =>
   new Promise(resolve => {
     const balances = map(
-      sentence => view(lensIndex(4), split(' ', sentence)),
-      reverse(split('\n', str))
+      sentence => +view(lensIndex(4), split(' ', sentence)),
+      reverse(split('\n', str)),
     )
     fetch(
       stringMerge(HISTORY_URL, {
-        fromCurrency,
-        toCurrency,
+        minedCurrencyCode,
+        analysisCurrencyCode,
         limit: prop('length', balances),
-      })
+      }),
     ).then(response => {
       return response.json().then(json => {
-        const projectedProfit = subtract(
-          multiply(daysLeft, mean(balances), oneEthInGbp),
-          contractCostInGbp
-        )
-        const accruedPayback = multiply(
-          sum(balances),
-          oneEthInGbp
-        )
         const ethGbpData = addIndex(map)(
           ({ open: price }, i) => ({
             price,
             day: i,
           }),
-          json.Data
+          json.Data,
+        )
+
+        const projectedProfit = subtract(
+          multiply(daysLeft, mean(balances), exchangeRate),
+          contractCostInGbp,
+        )
+
+        console.log('b', balances)
+        console.log('exchangeRate', exchangeRate)
+        const accruedPayback = multiply(
+          sum(balances),
+          exchangeRate,
         )
 
         resolve({
-          historicalData: addIndex(map)((balance, i) => {
-            return {
+          historicalData: addIndex(map)(
+            (balance, i) => ({
               day: inc(i),
               balance: +balance,
               gbpValue: prop(
                 'price',
-                find(propEq('day', i), ethGbpData)
+                find(propEq('day', i), ethGbpData),
               ),
               average: or(
                 divide(sum(slice(0, i, balances)), i),
-                +balance
+                +balance,
               ),
-            }
-          }, balances),
+            }),
+            balances,
+          ),
           average: mean(balances),
           totalEth: sum(balances),
-          oneEthInGbp,
+          exchangeRate,
           ethGbpData,
           averagePerDayProfitGbp: multiply(
             mean(balances),
-            oneEthInGbp
+            exchangeRate,
           ),
           accruedPayback,
-          accruedPaybackAsPercentage: multiply(
-            divide(contractCostInGbp, 100),
-            accruedPayback
+          accruedPaybackAsPercentage: percent(
+            accruedPayback,
+            contractCostInGbp,
           ),
           daysLeft: subtract(
             multiply(daysInYear, contractInYears),
-            prop('length', balances)
+            prop('length', balances),
           ),
           projectedProfit,
-          projectedProfitPercent: divide(
+          projectedProfitPercent: percent(
             contractCostInGbp,
-            multiply(100, projectedProfit)
+            projectedProfit,
           ),
         })
       })

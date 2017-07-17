@@ -1,30 +1,25 @@
 import React, { Component } from 'react'
+import {
+  bind,
+  isEmpty,
+  length,
+  subtract,
+  head,
+  values,
+} from 'ramda'
+
 import './App.css'
+
 import Statistics from './components/Statistics'
 import Forecasting from './components/Forecasting'
 import Form from './components/Form'
-import {
-  bind,
-  find,
-  propEq,
-  divide,
-  isEmpty,
-  multiply,
-  length,
-  subtract,
-  pick,
-  pipe,
-  pluck,
-  prop,
-  props,
-  sum,
-} from 'ramda'
+
 import mockData from './mocks/historical'
 import processData from './functions/data-processor'
 import { stringMerge } from './functions/string'
 
 const EXCHANGE_RATE_URL =
-  'https://min-api.cryptocompare.com/data/price?fsym={fromCurrency}&tsyms={toCurrency}'
+  'https://min-api.cryptocompare.com/data/price?fsym={minedCurrencyCode}&tsyms={analysisCurrencyCode}'
 
 class App extends Component {
   constructor() {
@@ -32,51 +27,58 @@ class App extends Component {
     this.state = {
       average: 0,
       averageInGbp: 0,
-      oneEthInGbp: 0,
+      exchangeRate: 0,
       totalEth: 0,
       ethGbpData: [],
-      fromCurrency: 'ETH',
-      toCurrency: 'GBP',
+      minedCurrencyCode: 'ETH',
+      analysisCurrencyCode: 'GBP',
       contractCostInGbp: 100,
+      contractLengthInDays: 365 * 2,
       averagePerDayProfitGbp: 0,
       accruedPayback: 0,
       accruedPaybackAsPercentage: 0,
       daysLeft: 0,
       projectedProfit: 0,
       projectedProfitPercent: 0,
-      historicalData: [], // just balances
+      historicalData: [],
     }
     this.handleChange = bind(this.handleChange, this)
   }
 
-  componentDidMount() {
-    const { state } = this
+  componentWillMount() {
+    const {
+      state: {
+        analysisCurrencyCode,
+        contractCostInGbp,
+        contractLengthInDays,
+        historicalData,
+        minedCurrencyCode,
+      },
+    } = this
     fetch(
       stringMerge(
         EXCHANGE_RATE_URL,
-        pick(['fromCurrency', 'toCurrency'], state)
-      )
-    ).then(exchangeRateData => {
-      return exchangeRateData.json().then(json => {
+        minedCurrencyCode,
+        analysisCurrencyCode,
+      ),
+    ).then(exchangeRateData =>
+      exchangeRateData.json().then(exchangeRateData =>
         processData(mockData, {
-          oneEthInGbp: json.GBP,
           daysLeft: subtract(
-            multiply(365, 2),
-            length(state.historicalData)
+            contractLengthInDays,
+            length(historicalData),
           ),
-          // todo merge
-          contractCostInGbp: state.contractCostInGbp,
-          fromCurrency: state.fromCurrency,
-          toCurrency: state.toCurrency,
-        }).then(data => this.setState(data))
-      })
-    })
+          exchangeRateData: head(values(exchangeRateData)),
+          contractCostInGbp,
+          minedCurrencyCode,
+          analysisCurrencyCode,
+        }).then(data => this.setState(data)),
+      ),
+    )
   }
 
-  handleChange({ target }) {
-    processData(target.value).then(data =>
-      this.setState(data)
-    )
+  handleChange({ target: { value } }) {
+    processData(value).then(data => this.setState(data))
   }
 
   get forecast() {
@@ -91,7 +93,7 @@ class App extends Component {
           state.projectedProfitPercent
         }
         daysLeft={state.daysLeft}
-        oneEthInGbp={state.oneEthInGbp}
+        exchangeRate={state.exchangeRate}
         daysLength={length(state.historicalData)}
         historicalData={state.historicalData}
       />
@@ -103,7 +105,7 @@ class App extends Component {
     return (
       <div>
         <Form
-          toCurrency={state.toCurrency}
+          analysisCurrencyCode={state.analysisCurrencyCode}
           handleChange={handleChange}
           contractCostInGbp={state.contractCostInGbp}
         />
