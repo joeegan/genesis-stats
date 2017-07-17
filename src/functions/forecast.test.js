@@ -36,6 +36,6 @@ it('Predicts realistic data', () => {
     prop('balance', last(forecast(historicalData, 3))),
   ).toEqual(7)
   expect(
-    prop('balance', last(forecast(historicalData, 10000))),
-  ).toEqual(10004)
+    prop('balance', last(forecast(historicalData, 1000))),
+  ).toEqual(1004)
 })

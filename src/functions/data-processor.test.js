@@ -31,6 +31,7 @@ it(`Calls fetch with the 'mined' and 'analysis' currencies`, () => {
 it('Resolves with an average of the balances', () => {
   processData(twoSentences, {
     exchangeRate: 1,
+    minedCurrencyCode,
     analysisCurrencyCode,
   }).then(({ average }) => expect(average).toEqual(0.5))
 })

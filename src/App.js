@@ -56,25 +56,28 @@ class App extends Component {
       },
     } = this
     fetch(
-      stringMerge(
-        EXCHANGE_RATE_URL,
+      stringMerge(EXCHANGE_RATE_URL, {
         minedCurrencyCode,
         analysisCurrencyCode,
-      ),
-    ).then(exchangeRateData =>
-      exchangeRateData.json().then(exchangeRateData =>
-        processData(mockData, {
-          daysLeft: subtract(
-            contractLengthInDays,
-            length(historicalData),
-          ),
-          exchangeRateData: head(values(exchangeRateData)),
-          contractCostInGbp,
-          minedCurrencyCode,
-          analysisCurrencyCode,
-        }).then(data => this.setState(data)),
-      ),
-    )
+      }),
+    ).then(exchangeRateData => {
+      return exchangeRateData
+        .json()
+        .then(exchangeRateData => {
+          return processData(mockData, {
+            daysLeft: subtract(
+              contractLengthInDays,
+              length(historicalData),
+            ),
+            exchangeRateData: head(
+              values(exchangeRateData),
+            ),
+            contractCostInGbp,
+            minedCurrencyCode,
+            analysisCurrencyCode,
+          }).then(data => this.setState(data))
+        })
+    })
   }
 
   handleChange({ target: { value } }) {

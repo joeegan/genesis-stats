@@ -62,8 +62,6 @@ const processData = (
           contractCostInGbp,
         )
 
-        console.log('b', balances)
-        console.log('exchangeRate', exchangeRate)
         const accruedPayback = multiply(
           sum(balances),
           exchangeRate,
