@@ -4,7 +4,6 @@ import {
   concat,
   dec,
   find,
-  head,
   inc,
   map,
   mean,

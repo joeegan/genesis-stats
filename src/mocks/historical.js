@@ -30,6 +30,7 @@ dagger-hashimoto ETH balance of 0.00227133 added to your account on 2017-06-19T1
 dagger-hashimoto ETH balance of 0.00222747 added to your account on 2017-06-18T12:00:00+00:00
 dagger-hashimoto ETH balance of 0.0021905 added to your account on 2017-06-17T12:00:00+00:00`
 
+// eslint-disable-next-line
 const btcExample = `sha256 BTC balance of 0.00100701 added to your account on 2017-08-11T12:00:00+00:00
 sha256 BTC balance of 0.00100264 added to your account on 2017-08-10T12:00:00+00:00`
 

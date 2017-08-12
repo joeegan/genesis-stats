@@ -81,7 +81,6 @@ const processData = (
           sum(balances),
           exchangeRate,
         )
-
         const historicalData = addIndex(map)(
           (balance, i) => ({
             day: inc(i),

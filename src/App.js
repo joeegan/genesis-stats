@@ -1,12 +1,5 @@
 import React, { Component } from 'react'
-import {
-  bind,
-  isEmpty,
-  length,
-  subtract,
-  head,
-  values,
-} from 'ramda'
+import { bind, isEmpty, length, head, values } from 'ramda'
 
 import './App.css'
 
@@ -49,7 +42,6 @@ class App extends Component {
         analysisCurrencyCode,
         contractCostInGbp,
         contractLengthInDays,
-        historicalData,
       },
     } = this
     const minedCurrencyCode = mockData
