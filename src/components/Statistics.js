@@ -7,46 +7,52 @@ const Statistics = ({
   accruedPaybackAsPercentage,
   averagePerDayProfitGbp,
   average,
+  minedCurrencyCode,
   daysLength,
   historicalData,
-  ethGbpData,
+  pricesWithDays,
 }) => {
   return (
     <div>
       <h2>
-        Statistics
-        {' '}
-        <span role="img" aria-label="statistics">📈</span>
+        Statistics{' '}
+        <span role="img" aria-label="statistics">
+          📈
+        </span>
       </h2>
       <p>
-        Current accrued payback:
-        {' '}
-        {accruedPayback.toFixed(2)}
-        {' '}
-        GBP
-        {' '}
-        {accruedPaybackAsPercentage}
+        Current accrued payback: {accruedPayback.toFixed(2)}{' '}
+        GBP {accruedPaybackAsPercentage.toFixed(2)}
         %
       </p>
       <p>
-        Average payback per day: <strong>
-          {averagePerDayProfitGbp}GBP (
+        Average payback per day:{' '}
+        <strong>
+          {averagePerDayProfitGbp.toFixed(2)}GBP (
           {average.toFixed(4)}
-          ETH ) over {daysLength} days
+          ETH) over {daysLength} days
         </strong>
       </p>
-      {miningHistoryPerDayChart(historicalData)}
-      {miningHistoryInToCurrencyChart(historicalData)}
-      {currencyPairSinceContractAcquired(ethGbpData)}
+      {miningHistoryPerDayChart(
+        historicalData,
+        minedCurrencyCode,
+      )}
+      {miningHistoryInToCurrencyChart(
+        historicalData,
+        minedCurrencyCode,
+      )}
     </div>
   )
 }
-const miningHistoryPerDayChart = data => {
+const miningHistoryPerDayChart = (
+  data,
+  minedCurrencyCode,
+) => {
   return (
     <Chart
       data={data}
-      yAxisLabel="ETH"
-      legendTitle="ETH mining history per day"
+      yAxisLabel={minedCurrencyCode}
+      legendTitle={`${minedCurrencyCode} mining history per day`}
       lines={[
         <Line
           key="a"
@@ -65,12 +71,15 @@ const miningHistoryPerDayChart = data => {
     />
   )
 }
-const miningHistoryInToCurrencyChart = data => {
+const miningHistoryInToCurrencyChart = (
+  data,
+  minedCurrencyCode,
+) => {
   return (
     <Chart
       data={data}
       yAxisLabel="GBP"
-      legendTitle="GBP value of ETH mining per day"
+      legendTitle={`GBP value of ${minedCurrencyCode} mining per day`}
       lines={[
         <Line
           key="a"
@@ -83,22 +92,5 @@ const miningHistoryInToCurrencyChart = data => {
     />
   )
 }
-const currencyPairSinceContractAcquired = data => {
-  return (
-    <Chart
-      data={data}
-      yAxisLabel="GBP"
-      legendTitle="ETH/GBP since contract acquired"
-      lines={[
-        <Line
-          key="a"
-          type="monotone"
-          dataKey="price"
-          stroke="#4d84d8"
-          dot={false}
-        />,
-      ]}
-    />
-  )
-}
+
 export default Statistics

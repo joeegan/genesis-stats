@@ -26,11 +26,9 @@ class App extends Component {
     super()
     this.state = {
       average: 0,
-      averageInGbp: 0,
       exchangeRate: 0,
-      totalEth: 0,
-      ethGbpData: [],
-      minedCurrencyCode: 'ETH',
+      totalCrypto: 0,
+      pricesWithDays: [],
       analysisCurrencyCode: 'GBP',
       contractCostInGbp: 100,
       contractLengthInDays: 365 * 2,
@@ -52,9 +50,11 @@ class App extends Component {
         contractCostInGbp,
         contractLengthInDays,
         historicalData,
-        minedCurrencyCode,
       },
     } = this
+    const minedCurrencyCode = mockData
+      .split('\n')[0]
+      .split(' ')[1]
     fetch(
       stringMerge(EXCHANGE_RATE_URL, {
         minedCurrencyCode,
@@ -65,17 +65,17 @@ class App extends Component {
         .json()
         .then(exchangeRateData => {
           return processData(mockData, {
-            daysLeft: subtract(
-              contractLengthInDays,
-              length(historicalData),
-            ),
-            exchangeRateData: head(
-              values(exchangeRateData),
-            ),
+            contractLengthInDays,
+            exchangeRate: head(values(exchangeRateData)),
             contractCostInGbp,
             minedCurrencyCode,
             analysisCurrencyCode,
-          }).then(data => this.setState(data))
+          }).then(data =>
+            this.setState({
+              ...data,
+              minedCurrencyCode,
+            }),
+          )
         })
     })
   }
@@ -91,6 +91,7 @@ class App extends Component {
     }
     return (
       <Forecasting
+        minedCurrencyCode={state.minedCurrencyCode}
         projectedProfit={state.projectedProfit}
         projectedProfitPercent={
           state.projectedProfitPercent
@@ -114,6 +115,7 @@ class App extends Component {
         />
         <div className="output">
           <Statistics
+            minedCurrencyCode={state.minedCurrencyCode}
             accruedPayback={state.accruedPayback}
             accruedPaybackAsPercentage={
               state.accruedPaybackAsPercentage
@@ -122,9 +124,9 @@ class App extends Component {
               state.averagePerDayProfitGbp
             }
             average={state.average}
-            daysLength={state.historicalData.length}
+            daysLength={length(state.historicalData)}
             historicalData={state.historicalData}
-            ethGbpData={state.ethGbpData}
+            pricesWithDays={state.pricesWithDays}
           />
           {this.forecast}
         </div>

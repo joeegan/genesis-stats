@@ -3,7 +3,9 @@ import {
   find,
   propEq,
   divide,
+  head,
   inc,
+  length,
   map,
   multiply,
   mean,
@@ -32,14 +34,17 @@ const processData = (
     exchangeRate,
     daysLeft,
     contractCostInGbp,
+    contractLengthInDays,
     minedCurrencyCode,
     analysisCurrencyCode,
   },
 ) =>
   new Promise(resolve => {
+    const dataRows = reverse(split('\n', str))
+    const minedCurrencyCode = head(dataRows).split(' ')[1]
     const balances = map(
       sentence => +view(lensIndex(4), split(' ', sentence)),
-      reverse(split('\n', str)),
+      dataRows,
     )
     fetch(
       stringMerge(HISTORY_URL, {
@@ -49,16 +54,26 @@ const processData = (
       }),
     ).then(response => {
       return response.json().then(json => {
-        const ethGbpData = addIndex(map)(
+        const pricesWithDays = addIndex(map)(
           ({ open: price }, i) => ({
             price,
             day: i,
           }),
           json.Data,
         )
-
+        const totalContractDays = multiply(
+          daysInYear,
+          contractInYears,
+        )
+        const daysLeft = subtract(
+          totalContractDays,
+          length(balances),
+        )
         const projectedProfit = subtract(
-          multiply(daysLeft, mean(balances), exchangeRate),
+          multiply(
+            totalContractDays,
+            multiply(mean(balances), exchangeRate),
+          ),
           contractCostInGbp,
         )
 
@@ -67,26 +82,29 @@ const processData = (
           exchangeRate,
         )
 
+        const historicalData = addIndex(map)(
+          (balance, i) => ({
+            day: inc(i),
+            balance: +balance,
+            gbpValue: prop(
+              'price',
+              find(propEq('day', i), pricesWithDays),
+            ),
+            average: or(
+              divide(sum(slice(0, i, balances)), i),
+              +balance,
+            ),
+          }),
+          balances,
+        )
+
         resolve({
-          historicalData: addIndex(map)(
-            (balance, i) => ({
-              day: inc(i),
-              balance: +balance,
-              gbpValue: prop(
-                'price',
-                find(propEq('day', i), ethGbpData),
-              ),
-              average: or(
-                divide(sum(slice(0, i, balances)), i),
-                +balance,
-              ),
-            }),
-            balances,
-          ),
+          minedCurrencyCode,
+          historicalData,
           average: mean(balances),
-          totalEth: sum(balances),
+          totalCrypto: sum(balances),
           exchangeRate,
-          ethGbpData,
+          pricesWithDays,
           averagePerDayProfitGbp: multiply(
             mean(balances),
             exchangeRate,
@@ -96,10 +114,7 @@ const processData = (
             accruedPayback,
             contractCostInGbp,
           ),
-          daysLeft: subtract(
-            multiply(daysInYear, contractInYears),
-            prop('length', balances),
-          ),
+          daysLeft,
           projectedProfit,
           projectedProfitPercent: percent(
             contractCostInGbp,

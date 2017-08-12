@@ -9,8 +9,7 @@ const Form = ({
   return (
     <div className="input">
       <p>
-        Show stats in:
-        {' '}
+        Show stats in:{' '}
         <select>
           <option defaultValue>
             {analysisCurrencyCode}
@@ -18,8 +17,7 @@ const Form = ({
         </select>
       </p>
       <p>
-        Paste in your orders data from
-        {' '}
+        Paste in your orders data from{' '}
         <a href="https://www.genesis-mining.com/my-orders">
           genesis-mining.com/my-orders
         </a>:
@@ -31,17 +29,15 @@ const Form = ({
         value={mockData}
       />
       <p>
-        How much did your contract cost?
-        {' '}
-        <input readOnly value={contractCostInGbp} />
+        How much did your contract cost?{' '}
+        <input type="text" value={contractCostInGbp} />
         <select>
           <option defaultValue>GBP</option>
         </select>
       </p>
       <p>
-        When does your contract end?
-        {' '}
-        <input type="date" readOnly value="2019-06-16" />
+        When does your contract end?{' '}
+        <input type="date" value="2019-06-16" />
       </p>
     </div>
   )
