@@ -1,5 +1,14 @@
 import React, { Component } from 'react'
-import { bind, isEmpty, length, head, values } from 'ramda'
+import {
+  bind,
+  isEmpty,
+  length,
+  head,
+  values,
+  view,
+  lensIndex,
+  split,
+} from 'ramda'
 
 import './App.css'
 
@@ -23,9 +32,9 @@ class App extends Component {
       totalCrypto: 0,
       pricesWithDays: [],
       analysisCurrencyCode: 'GBP',
-      contractCostInGbp: 100,
+      contractCostInAnalysisCurrency: 100,
       contractLengthInDays: 365 * 2,
-      averagePerDayProfitGbp: 0,
+      averagePerDayProfitInAnalysisCurrency: 0,
       accruedPayback: 0,
       accruedPaybackAsPercentage: 0,
       daysLeft: 0,
@@ -33,20 +42,36 @@ class App extends Component {
       projectedProfitPercent: 0,
       historicalData: [],
     }
-    this.handleChange = bind(this.handleChange, this)
+    this.handlePastedDataChange = bind(
+      this.handlePastedDataChange,
+      this,
+    )
+    this.handleContractEndDate = bind(
+      this.handleContractEndDate,
+      this,
+    )
+    this.handleContractCostChange = bind(
+      this.handleContractCostChange,
+      this,
+    )
+    this.handleAnalysisCurrencyChange = bind(
+      this.handleAnalysisCurrencyChange,
+      this,
+    )
   }
 
   componentWillMount() {
     const {
       state: {
         analysisCurrencyCode,
-        contractCostInGbp,
+        contractCostInAnalysisCurrency,
         contractLengthInDays,
       },
     } = this
-    const minedCurrencyCode = mockData
-      .split('\n')[0]
-      .split(' ')[1]
+    const minedCurrencyCode = view(
+      lensIndex(1),
+      split(' ', head(split('\n', mockData))),
+    )
     fetch(
       stringMerge(EXCHANGE_RATE_URL, {
         minedCurrencyCode,
@@ -59,7 +84,7 @@ class App extends Component {
           return processData(mockData, {
             contractLengthInDays,
             exchangeRate: head(values(exchangeRateData)),
-            contractCostInGbp,
+            contractCostInAnalysisCurrency,
             minedCurrencyCode,
             analysisCurrencyCode,
           }).then(data =>
@@ -72,7 +97,19 @@ class App extends Component {
     })
   }
 
-  handleChange({ target: { value } }) {
+  handleContractCostChange() {
+    // TODO
+  }
+
+  handleContractEndDate() {
+    // TODO
+  }
+
+  handleAnalysisCurrencyChange() {
+    // TODO
+  }
+
+  handlePastedDataChange({ target: { value } }) {
     processData(value).then(data => this.setState(data))
   }
 
@@ -83,6 +120,7 @@ class App extends Component {
     }
     return (
       <Forecasting
+        analysisCurrencyCode={state.analysisCurrencyCode}
         minedCurrencyCode={state.minedCurrencyCode}
         projectedProfit={state.projectedProfit}
         projectedProfitPercent={
@@ -97,23 +135,41 @@ class App extends Component {
   }
 
   render() {
-    const { state, handleChange } = this
+    const {
+      state,
+      handleAnalysisCurrencyChange,
+      handleContractEndDate,
+      handleContractCostChange,
+      handlePastedDataChange,
+    } = this
     return (
       <div>
         <Form
           analysisCurrencyCode={state.analysisCurrencyCode}
-          handleChange={handleChange}
-          contractCostInGbp={state.contractCostInGbp}
+          handlePastedDataChange={handlePastedDataChange}
+          handleAnalysisCurrencyChange={
+            handleAnalysisCurrencyChange
+          }
+          handleContractCostChange={
+            handleContractCostChange
+          }
+          handleContractEndDate={handleContractEndDate}
+          contractCostInAnalysisCurrency={
+            state.contractCostInAnalysisCurrency
+          }
         />
         <div className="output">
           <Statistics
+            analysisCurrencyCode={
+              state.analysisCurrencyCode
+            }
             minedCurrencyCode={state.minedCurrencyCode}
             accruedPayback={state.accruedPayback}
             accruedPaybackAsPercentage={
               state.accruedPaybackAsPercentage
             }
-            averagePerDayProfitGbp={
-              state.averagePerDayProfitGbp
+            averagePerDayProfitInAnalysisCurrency={
+              state.averagePerDayProfitInAnalysisCurrency
             }
             average={state.average}
             daysLength={length(state.historicalData)}

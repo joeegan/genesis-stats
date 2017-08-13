@@ -33,7 +33,7 @@ const processData = (
   {
     exchangeRate,
     daysLeft,
-    contractCostInGbp,
+    contractCostInAnalysisCurrency,
     contractLengthInDays,
     minedCurrencyCode,
     analysisCurrencyCode,
@@ -74,7 +74,7 @@ const processData = (
             totalContractDays,
             multiply(mean(balances), exchangeRate),
           ),
-          contractCostInGbp,
+          contractCostInAnalysisCurrency,
         )
 
         const accruedPayback = multiply(
@@ -104,19 +104,19 @@ const processData = (
           totalCrypto: sum(balances),
           exchangeRate,
           pricesWithDays,
-          averagePerDayProfitGbp: multiply(
+          averagePerDayProfitInAnalysisCurrency: multiply(
             mean(balances),
             exchangeRate,
           ),
           accruedPayback,
           accruedPaybackAsPercentage: percent(
             accruedPayback,
-            contractCostInGbp,
+            contractCostInAnalysisCurrency,
           ),
           daysLeft,
           projectedProfit,
           projectedProfitPercent: percent(
-            contractCostInGbp,
+            contractCostInAnalysisCurrency,
             projectedProfit,
           ),
         })

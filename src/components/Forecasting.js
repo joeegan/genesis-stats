@@ -4,6 +4,7 @@ import { Line } from 'recharts'
 import forecast from '../functions/forecast'
 
 const Forecasting = ({
+  analysisCurrencyCode,
   minedCurrencyCode,
   projectedProfit,
   projectedProfitPercent,
@@ -15,10 +16,10 @@ const Forecasting = ({
   <div>
     <h2>Forecasting</h2>
     <p>
-      Projected profit if {minedCurrencyCode}/GBP price
-      remains:
+      Projected profit if {minedCurrencyCode}/{analysisCurrencyCode}{' '}
+      price remains:
       {projectedProfit.toFixed(2)}
-      GBP
+      {analysisCurrencyCode}
       <span role="img" aria-label="sun emoji">
         ☀️
       </span>
@@ -26,13 +27,8 @@ const Forecasting = ({
       {daysLeft.toFixed(0)} days left
     </p>
     <sub>
-      Based on {exchangeRate}
-      {minedCurrencyCode}/GBP (
-      {new Date()
-        .toISOString()
-        .replace(/[A-Z]/g, ' ')
-        .substring(0, 19)}
-      )
+      Based on todays exchangeRate: {exchangeRate}
+      {minedCurrencyCode}/{analysisCurrencyCode}
     </sub>
     {forecast(historicalData, daysLeft).nonProfitDay &&
       <p>

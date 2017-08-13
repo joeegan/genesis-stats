@@ -3,9 +3,10 @@ import Chart from './Chart'
 import { Line } from 'recharts'
 
 const Statistics = ({
+  analysisCurrencyCode,
   accruedPayback,
   accruedPaybackAsPercentage,
-  averagePerDayProfitGbp,
+  averagePerDayProfitInAnalysisCurrency,
   average,
   minedCurrencyCode,
   daysLength,
@@ -22,23 +23,27 @@ const Statistics = ({
       </h2>
       <p>
         Current accrued payback: {accruedPayback.toFixed(2)}{' '}
-        GBP {accruedPaybackAsPercentage.toFixed(2)}
+        {analysisCurrencyCode}{' '}
+        {accruedPaybackAsPercentage.toFixed(2)}
         %
       </p>
       <p>
         Average payback per day:{' '}
         <strong>
-          {averagePerDayProfitGbp.toFixed(2)}GBP (
+          {averagePerDayProfitInAnalysisCurrency.toFixed(2)}
+          {analysisCurrencyCode} (
           {average.toFixed(4)}
-          ETH) over {daysLength} days
+          {analysisCurrencyCode}) over {daysLength} days
         </strong>
       </p>
       {miningHistoryPerDayChart(
         historicalData,
+        analysisCurrencyCode,
         minedCurrencyCode,
       )}
       {miningHistoryInToCurrencyChart(
         historicalData,
+        analysisCurrencyCode,
         minedCurrencyCode,
       )}
     </div>
@@ -46,6 +51,7 @@ const Statistics = ({
 }
 const miningHistoryPerDayChart = (
   data,
+  analysisCurrencyCode,
   minedCurrencyCode,
 ) => {
   return (
@@ -73,13 +79,14 @@ const miningHistoryPerDayChart = (
 }
 const miningHistoryInToCurrencyChart = (
   data,
+  analysisCurrencyCode,
   minedCurrencyCode,
 ) => {
   return (
     <Chart
       data={data}
-      yAxisLabel="GBP"
-      legendTitle={`GBP value of ${minedCurrencyCode} mining per day`}
+      yAxisLabel={analysisCurrencyCode}
+      legendTitle={`${analysisCurrencyCode} value of ${minedCurrencyCode} mining per day`}
       lines={[
         <Line
           key="a"

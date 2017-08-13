@@ -3,17 +3,22 @@ import mockData from '../mocks/historical'
 
 const Form = ({
   analysisCurrencyCode,
-  handleChange,
-  contractCostInGbp,
+  contractCostInAnalysisCurrency,
+  handleAnalysisCurrencyChange,
+  handlePastedDataChange,
+  handleContractCostChange,
+  handleContractEndDate,
 }) => {
   return (
     <div className="input">
       <p>
         Show stats in:{' '}
-        <select>
+        <select onChange={handleAnalysisCurrencyChange}>
           <option defaultValue>
             {analysisCurrencyCode}
           </option>
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
         </select>
       </p>
       <p>
@@ -25,19 +30,25 @@ const Form = ({
       <textarea
         cols="120"
         rows="5"
-        onChange={handleChange}
+        onChange={handlePastedDataChange}
         value={mockData}
       />
       <p>
         How much did your contract cost?{' '}
-        <input type="text" value={contractCostInGbp} />
-        <select>
-          <option defaultValue>GBP</option>
-        </select>
+        <input
+          type="text"
+          value={contractCostInAnalysisCurrency}
+          onChange={handleContractCostChange}
+        />
+        {analysisCurrencyCode}
       </p>
       <p>
         When does your contract end?{' '}
-        <input type="date" value="2019-06-16" />
+        <input
+          onChange={handleContractEndDate}
+          type="date"
+          value="2019-06-16"
+        />
       </p>
     </div>
   )
